@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spanish Verb Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🇪🇸 Spanish Verb Trainer</h1>
+            <nav>
+                <a href="index.html" class="nav-link active">Generate Verbs</a>
+                <a href="sentences.html" class="nav-link">Process Sentences</a>
+                <a href="study.html" class="nav-link">Study Cards</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="generator-section">
+                <h2>Verb Conjugation Generator</h2>
+                <p>Enter any Spanish verb to generate comprehensive flashcards with context</p>
+                
+                <div class="input-section">
+                    <form id="verbForm">
+                        <div class="form-group">
+                            <label for="verbInput">Spanish Verb:</label>
+                            <input 
+                                type="text" 
+                                id="verbInput" 
+                                placeholder="e.g., hablar, ser, soler..." 
+                                required
+                            >
+                        </div>
+                        <button type="submit" id="generateBtn">
+                            <span class="btn-text">Generate Conjugations</span>
+                            <span class="spinner" style="display: none;">⏳</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div id="loadingSection" class="loading-section" style="display: none;">
+                    <div class="loading-animation">
+                        <div class="spinner-large">🧠</div>
+                        <p>Generating conjugations and context with Gemma3n...</p>
+                        <small>This may take 10-30 seconds</small>
+                    </div>
+                </div>
+
+                <div id="resultsSection" class="results-section" style="display: none;">
+                    <div class="verb-overview">
+                        <h3 id="verbTitle"></h3>
+                        <div class="context-cards">
+                            <div class="context-card">
+                                <h4>📖 Overview</h4>
+                                <p id="verbOverview"></p>
+                            </div>
+                            <div class="context-card">
+                                <h4>🔗 Related Verbs</h4>
+                                <div id="relatedVerbs"></div>
+                            </div>
+                            <div class="context-card">
+                                <h4>💡 Usage Notes</h4>
+                                <p id="verbNotes"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="conjugations-preview">
+                        <h4>Generated Conjugation Cards</h4>
+                        <div class="stats">
+                            <span id="cardCount">0 cards generated</span>
+                        </div>
+                        
+                        <div class="preview-grid" id="previewGrid">
+                            <!-- Cards will be inserted here -->
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button id="saveBtn" class="btn-primary">
+                                💾 Save All Cards
+                            </button>
+                            <button id="generateAnotherBtn" class="btn-secondary">
+                                ➕ Generate Another Verb
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="errorSection" class="error-section" style="display: none;">
+                    <div class="error-message">
+                        <h4>❌ Generation Failed</h4>
+                        <p id="errorText"></p>
+                        <button id="retryBtn" class="btn-secondary">Try Again</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
