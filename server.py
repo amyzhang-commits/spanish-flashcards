@@ -162,8 +162,8 @@ def generate_verb():
     try:
         # Call local Ollama
         ollama_response = requests.post('http://localhost:11434/api/generate', json={
-            "model": "gemma2:latest",
-            "prompt": f"Generate ALL Spanish verb conjugations for '{verb}' in this exact JSON format:\n{{\n  \"verb\": \"{verb}\",\n  \"conjugations\": [\n    {{\"pronoun\": \"yo\", \"tense\": \"present\", \"mood\": \"indicative\", \"form\": \"conjugated_form\"}},\n    {{\"pronoun\": \"tú\", \"tense\": \"present\", \"mood\": \"indicative\", \"form\": \"conjugated_form\"}}\n  ]\n}}\n\nInclude ALL tenses (present, preterite, imperfect, future, present perfect, past perfect, future perfect), moods (indicative, subjunctive, conditional, imperative), and pronouns (yo, tú, él/ella/usted, nosotros, vosotros, ellos/ellas/ustedes). Only return the JSON, no other text.",
+            "model": "gemma3n:latest",
+            "prompt": f"Generate Spanish verb conjugations for '{verb}' with context in this exact JSON format:\n{{\n  \"verb\": \"{verb}\",\n  \"overview\": \"Brief description of when/how this verb is used\",\n  \"related_verbs\": [\"similar_verb1\", \"similar_verb2\"],\n  \"notes\": \"Special usage patterns, irregularities, or cultural context\",\n  \"conjugations\": [\n    {{\"pronoun\": \"yo\", \"tense\": \"present\", \"mood\": \"indicative\", \"form\": \"conjugated_form\"}},\n    {{\"pronoun\": \"tú\", \"tense\": \"present\", \"mood\": \"indicative\", \"form\": \"conjugated_form\"}}\n  ]\n}}\n\nInclude ALL tenses (present, preterite, imperfect, future, present perfect, past perfect, future perfect), moods (indicative, subjunctive, conditional, imperative), and pronouns (yo, tú, él/ella/usted, nosotros, vosotros, ellos/ellas/ustedes).\n\nFor verbs like 'soler', 'acabar de', 'volver a' emphasize their specific meanings and usage patterns. Provide 2-3 related verbs or expressions that convey similar meanings. Only return the JSON, no other text.",
             "stream": False
         })
         
@@ -201,7 +201,7 @@ def process_sentence():
     try:
         # Call local Ollama
         ollama_response = requests.post('http://localhost:11434/api/generate', json={
-            "model": "gemma2:latest",
+            "model": "gemma3n:latest",
             "prompt": f"Fix any typos and add missing accents to this Spanish sentence, then provide an English translation with grammar notes. Return in this exact JSON format:\n{{\n  \"corrected_spanish\": \"corrected sentence\",\n  \"english_translation\": \"English translation\",\n  \"grammar_notes\": \"Brief grammar explanation\"\n}}\n\nSpanish sentence: {sentence}\n\nOnly return the JSON, no other text.",
             "stream": False
         })
@@ -229,5 +229,5 @@ def process_sentence():
 
 if __name__ == '__main__':
     # Use environment variable for port (Railway sets this)
-    port = int(os.environ.get('PORT', 8000))
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
