@@ -277,13 +277,16 @@
 
         // Toggle card selection
         function toggleCardSelection(cardId) {
-            if (selectedCardIds.has(cardId)) {
-                selectedCardIds.delete(cardId);
+            // Convert to string to handle both old numeric and new prefixed IDs
+            const cardIdString = String(cardId);
+            
+            if (selectedCardIds.has(cardIdString)) {
+                selectedCardIds.delete(cardIdString);
             } else {
-                selectedCardIds.add(cardId);
+                selectedCardIds.add(cardIdString);
             }
             
-            updateCardDisplay(cardId);
+            updateCardDisplay(cardIdString);
             updateStats();
             updateDeleteButton();
         }
@@ -291,8 +294,10 @@
         // Update individual card display
         function updateCardDisplay(cardId) {
             const cardElement = document.querySelector(`[data-card-id="${cardId}"]`);
+            if (!cardElement) return; // Card might not be visible due to filtering
+            
             const checkbox = cardElement.querySelector('.card-checkbox');
-            const isSelected = selectedCardIds.has(cardId);
+            const isSelected = selectedCardIds.has(String(cardId));
             
             checkbox.checked = isSelected;
             cardElement.classList.toggle('selected', isSelected);
@@ -317,7 +322,7 @@
         function updateAllCardDisplays() {
             const cardElements = document.querySelectorAll('.manage-card');
             cardElements.forEach(element => {
-                const cardId = parseInt(element.dataset.cardId);
+                const cardId = element.dataset.cardId; // Already a string from HTML
                 const checkbox = element.querySelector('.card-checkbox');
                 const isSelected = selectedCardIds.has(cardId);
                 
@@ -410,7 +415,7 @@
         function findDuplicates() {
             const sentenceCards = allCards.filter(card => card.type === 'sentence');
             console.log('Sentence cards found:', sentenceCards.length);
-            console.log('First few sentence cards:', sentenceCards.slice(0, 5)); // Debug what's actually in there
+            console.log('First few sentence cards:', sentenceCards.slice(0, 5));
             
             const duplicatesToRemove = [];
             const seenSentences = new Map();
@@ -423,11 +428,11 @@
                 
                 if (seenSentences.has(key)) {
                     // This is a duplicate - mark it for removal (keep the first one)
-                    duplicatesToRemove.push(card.id);
+                    duplicatesToRemove.push(String(card.id)); // Ensure ID is string
                     console.log('Found duplicate sentence to remove:', key, 'Card ID:', card.id);
                 } else {
                     // First time seeing this sentence - keep it
-                    seenSentences.set(key, card.id);
+                    seenSentences.set(key, String(card.id)); // Ensure ID is string
                 }
             });
             
