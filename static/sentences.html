@@ -164,9 +164,20 @@
             const sentencesGrid = document.getElementById('sentencesGrid');
             const sentenceCount = document.getElementById('sentenceCount');
             
-            // Create a single sentence card for now (we can expand to multiple later)
-            sentencesGrid.innerHTML = createSentenceCard(data);
-            sentenceCount.textContent = '1 sentence processed';
+            if (data.processed_sentences && data.processed_sentences.length > 0) {
+                // Create cards for multiple sentences
+                sentencesGrid.innerHTML = data.processed_sentences
+                    .map(sentence => createSentenceCard(sentence))
+                    .join('');
+                sentenceCount.textContent = `${data.processed_sentences.length} sentences processed`;
+            } else if (data.corrected_spanish) {
+                // Handle single sentence (backward compatibility)
+                sentencesGrid.innerHTML = createSentenceCard(data);
+                sentenceCount.textContent = '1 sentence processed';
+            } else {
+                sentencesGrid.innerHTML = '<p class="no-sentences">No sentences processed</p>';
+                sentenceCount.textContent = '0 sentences processed';
+            }
             
             resultsSection.style.display = 'block';
         }
@@ -207,17 +218,31 @@
             saveAllBtn.innerHTML = 'Saving...';
             
             try {
+                let sentencesToSave = [];
+                
+                // Handle multiple sentences or single sentence
+                if (currentSentenceData.processed_sentences) {
+                    sentencesToSave = currentSentenceData.processed_sentences.map(sentence => ({
+                        spanish_sentence: sentence.corrected_spanish || sentence.original_sentence,
+                        english_translation: sentence.english_translation,
+                        grammar_notes: sentence.verb_info || ''
+                    }));
+                } else {
+                    // Single sentence (backward compatibility)
+                    sentencesToSave = [{
+                        spanish_sentence: currentSentenceData.corrected_spanish || currentSentenceData.spanish_sentence,
+                        english_translation: currentSentenceData.english_translation,
+                        grammar_notes: currentSentenceData.verb_info || ''
+                    }];
+                }
+                
                 const response = await fetch(`${API_BASE}/api/cards`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        sentence_cards: [{
-                            spanish_sentence: currentSentenceData.corrected_spanish || currentSentenceData.spanish_sentence,
-                            english_translation: currentSentenceData.english_translation,
-                            grammar_notes: currentSentenceData.verb_info || ''
-                        }]
+                        sentence_cards: sentencesToSave
                     })
                 });
                 
@@ -226,7 +251,7 @@
                 }
                 
                 // Show success
-                saveAllBtn.innerHTML = 'Cards Saved!';
+                saveAllBtn.innerHTML = `${sentencesToSave.length} Cards Saved!`;
                 saveAllBtn.classList.add('success');
                 
                 // Reset button after 2 seconds
