@@ -487,7 +487,148 @@ nav {
     margin-bottom: 15px;
 }
 
-/* Mobile responsiveness */
+/* Sentence processor specific styles */
+.processor-section {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.processor-section h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: #feca57;
+}
+
+.processor-section p {
+    margin-bottom: 30px;
+    opacity: 0.8;
+}
+
+#sentenceInput {
+    width: 100%;
+    padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    color: #e8eaed;
+    font-size: 1rem;
+    font-family: inherit;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 120px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+#sentenceInput:focus {
+    outline: none;
+    border-color: #ff6b6b;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#sentenceInput::placeholder {
+    color: rgba(232, 234, 237, 0.5);
+}
+
+.input-hint {
+    display: block;
+    margin-top: 8px;
+    color: rgba(232, 234, 237, 0.6);
+    font-size: 0.9rem;
+}
+
+.sentences-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.sentence-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.sentence-header {
+    background: rgba(255, 107, 107, 0.2);
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sentence-header h4 {
+    color: #ff6b6b;
+    margin: 0;
+}
+
+.sentence-content {
+    padding: 20px;
+}
+
+.spanish-section, .english-section, .verb-section {
+    margin-bottom: 20px;
+}
+
+.spanish-section:last-child, 
+.english-section:last-child, 
+.verb-section:last-child {
+    margin-bottom: 0;
+}
+
+.sentence-content label {
+    display: block;
+    font-weight: 600;
+    color: #feca57;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.corrected-spanish {
+    color: #e8eaed;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.english-translation {
+    color: #ff8e53;
+    font-size: 1.05rem;
+    margin: 0;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.verb-info {
+    color: rgba(232, 234, 237, 0.8);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    padding: 12px 0;
+    font-style: italic;
+}
+
+/* Mobile responsiveness for sentence processor */
+@media (max-width: 768px) {
+    .processor-section {
+        padding: 25px;
+    }
+    
+    .sentence-content {
+        padding: 15px;
+    }
+    
+    .sentence-header {
+        padding: 12px 15px;
+    }
+}
 @media (max-width: 768px) {
     .container {
         padding: 15px;
