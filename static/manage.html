@@ -165,7 +165,13 @@
         // Process cards to add consistent structure
         function processCards() {
             allCards = allCards.map(card => {
-                if (card.card_type === 'verb' || card.conjugated_form) {
+                // More robust type detection
+                const isVerbCard = card.verb && card.pronoun && card.tense && card.mood && card.conjugated_form;
+                const isSentenceCard = (card.spanish_sentence || card.english_translation) && !isVerbCard;
+                
+                console.log('Processing card:', card.id, 'isVerbCard:', isVerbCard, 'isSentenceCard:', isSentenceCard); // Debug
+                
+                if (isVerbCard) {
                     return {
                         ...card,
                         type: 'verb',
@@ -173,13 +179,22 @@
                         display_back: card.conjugated_form,
                         search_text: `${card.verb} ${card.pronoun} ${card.tense} ${card.mood} ${card.conjugated_form}`
                     };
-                } else {
+                } else if (isSentenceCard) {
                     return {
                         ...card,
                         type: 'sentence',
                         display_front: card.english_translation || 'English translation',
                         display_back: card.spanish_sentence || 'Spanish sentence',
-                        search_text: `${card.spanish_sentence} ${card.english_translation} ${card.grammar_notes || ''}`
+                        search_text: `${card.spanish_sentence || ''} ${card.english_translation || ''} ${card.grammar_notes || ''}`
+                    };
+                } else {
+                    console.warn('Card could not be categorized:', card);
+                    return {
+                        ...card,
+                        type: 'unknown',
+                        display_front: 'Unknown card type',
+                        display_back: JSON.stringify(card),
+                        search_text: JSON.stringify(card)
                     };
                 }
             });
@@ -379,21 +394,36 @@
 
         // Find duplicate sentences
         function findDuplicates() {
+            console.log('All cards:', allCards); // Debug log
+            
             const sentenceCards = allCards.filter(card => card.type === 'sentence');
+            console.log('Sentence cards found:', sentenceCards); // Debug log
+            
             const duplicates = [];
-            const seen = new Map();
+            const seenSentences = new Map();
             
             sentenceCards.forEach(card => {
-                const key = card.spanish_sentence.toLowerCase().trim();
-                if (seen.has(key)) {
-                    if (!duplicates.includes(seen.get(key))) {
-                        duplicates.push(seen.get(key));
+                // Use the actual Spanish sentence, not display text
+                const spanishText = card.spanish_sentence || card.display_back;
+                if (!spanishText) return;
+                
+                const key = spanishText.toLowerCase().trim();
+                console.log('Processing sentence:', key); // Debug log
+                
+                if (seenSentences.has(key)) {
+                    // Mark both the original and this duplicate
+                    const originalId = seenSentences.get(key);
+                    if (!duplicates.includes(originalId)) {
+                        duplicates.push(originalId);
                     }
                     duplicates.push(card.id);
+                    console.log('Found duplicate:', key, 'IDs:', originalId, card.id); // Debug log
                 } else {
-                    seen.set(key, card.id);
+                    seenSentences.set(key, card.id);
                 }
             });
+            
+            console.log('All duplicates found:', duplicates); // Debug log
             
             if (duplicates.length > 0) {
                 selectedCardIds.clear();
@@ -402,7 +432,7 @@
                 updateStats();
                 updateDeleteButton();
                 
-                alert(`Found ${duplicates.length} duplicate sentence cards. They have been selected for review.`);
+                alert(`Found ${duplicates.length} duplicate sentence cards. They have been selected for review. Check the console for details.`);
             } else {
                 alert('No duplicate sentence cards found.');
             }
