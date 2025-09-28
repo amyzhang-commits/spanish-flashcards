@@ -340,37 +340,59 @@
             const selectedVerb = verbSelect.value;
             const selectedTenseMood = tenseMoodSelect.value;
             
-            // Debug: Check what verbs we actually have
-            const uniqueVerbs = [...new Set(allCards.filter(card => card.verb).map(card => card.verb))];
-            console.log('Available verbs:', uniqueVerbs);
-            console.log('First few cards:', allCards.slice(0, 3));
+            console.log('=== updateFilters called ===');
+            console.log('Card type:', cardType);
+            console.log('Verb complexity:', verbComplexity);
+            console.log('Selected verb:', selectedVerb);
+            console.log('Selected tense/mood:', selectedTenseMood);
             
             filteredCards = allCards.filter(card => {
+                console.log(`Checking card ${card.id}: verb=${card.verb}, type=${cardType}`);
+                
                 // Card type filter
-                if (cardType === 'verb' && !card.verb) return false;
-                if (cardType === 'sentence' && card.verb) return false;
+                if (cardType === 'verb' && !card.verb) {
+                    console.log(`  Filtered out: not a verb card`);
+                    return false;
+                }
+                if (cardType === 'sentence' && card.verb) {
+                    console.log(`  Filtered out: not a sentence card`);
+                    return false;
+                }
                 
                 // Verb complexity filter (only applies to verb cards)
                 if (card.verb && verbComplexity !== 'all') {
                     const isIrregular = irregularVerbs.includes(card.verb.toLowerCase());
-                    console.log(`Verb: ${card.verb}, isIrregular: ${isIrregular}`); // Debug
-                    if (verbComplexity === 'irregular' && !isIrregular) return false;
-                    if (verbComplexity === 'regular' && isIrregular) return false;
+                    console.log(`  Verb: ${card.verb}, isIrregular: ${isIrregular}, looking for: ${verbComplexity}`);
+                    if (verbComplexity === 'irregular' && !isIrregular) {
+                        console.log(`  Filtered out: regular verb but looking for irregular`);
+                        return false;
+                    }
+                    if (verbComplexity === 'regular' && isIrregular) {
+                        console.log(`  Filtered out: irregular verb but looking for regular`);
+                        return false;
+                    }
                 }
                 
                 // Specific verb filter
-                if (selectedVerb !== 'all' && card.verb !== selectedVerb) return false;
+                if (selectedVerb !== 'all' && card.verb !== selectedVerb) {
+                    console.log(`  Filtered out: verb doesn't match selection`);
+                    return false;
+                }
                 
                 // Tense/mood filter
                 if (selectedTenseMood !== 'all' && card.verb) {
                     const cardTenseMood = `${card.tense} ${card.mood}`;
-                    if (cardTenseMood !== selectedTenseMood) return false;
+                    if (cardTenseMood !== selectedTenseMood) {
+                        console.log(`  Filtered out: tense/mood doesn't match`);
+                        return false;
+                    }
                 }
                 
+                console.log(`  INCLUDED in results`);
                 return true;
             });
             
-            console.log(`Filtered ${filteredCards.length} cards from ${allCards.length} total`); // Debug
+            console.log(`Final result: ${filteredCards.length} cards from ${allCards.length} total`);
             
             // Update UI
             availableCards.textContent = `${filteredCards.length} cards available`;
