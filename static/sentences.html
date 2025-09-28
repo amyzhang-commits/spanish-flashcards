@@ -165,15 +165,21 @@
             const sentenceCount = document.getElementById('sentenceCount');
             
             if (data.processed_sentences && data.processed_sentences.length > 0) {
-                // Create cards for multiple sentences
+                // Create cards for multiple sentences with indices
                 sentencesGrid.innerHTML = data.processed_sentences
-                    .map(sentence => createSentenceCard(sentence))
+                    .map((sentence, index) => createSentenceCard(sentence, index))
                     .join('');
                 sentenceCount.textContent = `${data.processed_sentences.length} sentences processed`;
+                
+                // Store data globally for editing
+                currentSentenceData = data;
             } else if (data.corrected_spanish) {
                 // Handle single sentence (backward compatibility)
-                sentencesGrid.innerHTML = createSentenceCard(data);
+                sentencesGrid.innerHTML = createSentenceCard(data, 0);
                 sentenceCount.textContent = '1 sentence processed';
+                
+                // Store single sentence data
+                currentSentenceData = { processed_sentences: [data] };
             } else {
                 sentencesGrid.innerHTML = '<p class="no-sentences">No sentences processed</p>';
                 sentenceCount.textContent = '0 sentences processed';
@@ -183,24 +189,34 @@
         }
 
         // Create sentence card display
-        function createSentenceCard(data) {
+        function createSentenceCard(data, index = 0) {
             return `
-                <div class="sentence-card">
+                <div class="sentence-card" data-sentence="${index}">
                     <div class="sentence-header">
                         <h4>Processed Sentence</h4>
+                        <button class="edit-btn" onclick="toggleEdit(${index})">
+                            <span class="edit-text">Edit</span>
+                            <span class="save-text" style="display: none;">Save</span>
+                        </button>
                     </div>
                     <div class="sentence-content">
                         <div class="spanish-section">
                             <label>Corrected Spanish:</label>
-                            <p class="corrected-spanish">${data.corrected_spanish || data.spanish_sentence || 'No correction provided'}</p>
+                            <p class="corrected-spanish editable-text" data-field="corrected_spanish">${data.corrected_spanish || data.spanish_sentence || 'No correction provided'}</p>
+                            <input type="text" class="edit-input" data-field="corrected_spanish" value="${data.corrected_spanish || data.spanish_sentence || ''}" style="display: none;">
                         </div>
                         <div class="english-section">
                             <label>English Translation:</label>
-                            <p class="english-translation">${data.english_translation || 'No translation provided'}</p>
+                            <p class="english-translation editable-text" data-field="english_translation">${data.english_translation || 'No translation provided'}</p>
+                            <input type="text" class="edit-input" data-field="english_translation" value="${data.english_translation || ''}" style="display: none;">
                         </div>
                         <div class="verb-section">
                             <label>Verb Info:</label>
-                            <p class="verb-info">${data.verb_info || 'No verbs identified'}</p>
+                            <p class="verb-info editable-text" data-field="verb_info">${data.verb_info || 'No verbs identified'}</p>
+                            <input type="text" class="edit-input" data-field="verb_info" value="${data.verb_info || ''}" style="display: none;">
+                        </div>
+                        <div class="edit-actions" style="display: none;">
+                            <button class="cancel-edit-btn" onclick="cancelEdit(${index})">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -302,6 +318,114 @@
         document.addEventListener('DOMContentLoaded', () => {
             sentenceInput.focus();
         });
+
+        // Editing functionality
+        function toggleEdit(index) {
+            const card = document.querySelector(`[data-sentence="${index}"]`);
+            const isEditing = card.classList.contains('editing');
+            
+            if (isEditing) {
+                saveEdit(index);
+            } else {
+                enterEditMode(index);
+            }
+        }
+
+        function enterEditMode(index) {
+            const card = document.querySelector(`[data-sentence="${index}"]`);
+            const editBtn = card.querySelector('.edit-btn');
+            const editText = editBtn.querySelector('.edit-text');
+            const saveText = editBtn.querySelector('.save-text');
+            const editActions = card.querySelector('.edit-actions');
+            
+            // Switch to editing mode
+            card.classList.add('editing');
+            editText.style.display = 'none';
+            saveText.style.display = 'inline';
+            editActions.style.display = 'block';
+            
+            // Hide text, show inputs
+            const textElements = card.querySelectorAll('.editable-text');
+            const inputElements = card.querySelectorAll('.edit-input');
+            
+            textElements.forEach(el => el.style.display = 'none');
+            inputElements.forEach(el => {
+                el.style.display = 'block';
+                // Copy current text to input value
+                const field = el.dataset.field;
+                const textEl = card.querySelector(`[data-field="${field}"].editable-text`);
+                el.value = textEl.textContent;
+            });
+            
+            // Focus on first input
+            const firstInput = card.querySelector('.edit-input');
+            if (firstInput) firstInput.focus();
+        }
+
+        function saveEdit(index) {
+            const card = document.querySelector(`[data-sentence="${index}"]`);
+            const editBtn = card.querySelector('.edit-btn');
+            const editText = editBtn.querySelector('.edit-text');
+            const saveText = editBtn.querySelector('.save-text');
+            const editActions = card.querySelector('.edit-actions');
+            
+            // Get edited values
+            const inputs = card.querySelectorAll('.edit-input');
+            const editedData = {};
+            
+            inputs.forEach(input => {
+                const field = input.dataset.field;
+                editedData[field] = input.value;
+            });
+            
+            // Update the stored data
+            if (currentSentenceData.processed_sentences) {
+                currentSentenceData.processed_sentences[index] = {
+                    ...currentSentenceData.processed_sentences[index],
+                    corrected_spanish: editedData.corrected_spanish,
+                    english_translation: editedData.english_translation,
+                    verb_info: editedData.verb_info
+                };
+            }
+            
+            // Update display
+            const textElements = card.querySelectorAll('.editable-text');
+            textElements.forEach(el => {
+                const field = el.dataset.field;
+                el.textContent = editedData[field] || 'Not provided';
+                el.style.display = 'block';
+            });
+            
+            // Hide inputs and exit edit mode
+            const inputElements = card.querySelectorAll('.edit-input');
+            inputElements.forEach(el => el.style.display = 'none');
+            
+            card.classList.remove('editing');
+            editText.style.display = 'inline';
+            saveText.style.display = 'none';
+            editActions.style.display = 'none';
+        }
+
+        function cancelEdit(index) {
+            const card = document.querySelector(`[data-sentence="${index}"]`);
+            const editBtn = card.querySelector('.edit-btn');
+            const editText = editBtn.querySelector('.edit-text');
+            const saveText = editBtn.querySelector('.save-text');
+            const editActions = card.querySelector('.edit-actions');
+            
+            // Exit edit mode without saving
+            card.classList.remove('editing');
+            editText.style.display = 'inline';
+            saveText.style.display = 'none';
+            editActions.style.display = 'none';
+            
+            // Show text, hide inputs
+            const textElements = card.querySelectorAll('.editable-text');
+            const inputElements = card.querySelectorAll('.edit-input');
+            
+            textElements.forEach(el => el.style.display = 'block');
+            inputElements.forEach(el => el.style.display = 'none');
+        }
     </script>
 </body>
 </html>

@@ -554,7 +554,11 @@ nav {
     overflow: hidden;
 }
 
+/* Sentence editing styles */
 .sentence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     background: rgba(255, 107, 107, 0.2);
     padding: 15px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -563,6 +567,81 @@ nav {
 .sentence-header h4 {
     color: #ff6b6b;
     margin: 0;
+}
+
+.edit-btn {
+    background: rgba(254, 202, 87, 0.3);
+    border: 1px solid rgba(254, 202, 87, 0.5);
+    border-radius: 8px;
+    color: #feca57;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.edit-btn:hover {
+    background: rgba(254, 202, 87, 0.5);
+    transform: translateY(-1px);
+}
+
+.sentence-card.editing .edit-btn {
+    background: rgba(16, 172, 132, 0.3);
+    border-color: rgba(16, 172, 132, 0.5);
+    color: #10ac84;
+}
+
+.edit-input {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #e8eaed;
+    font-size: 1rem;
+    font-family: inherit;
+    margin-top: 5px;
+    transition: all 0.3s ease;
+}
+
+.edit-input:focus {
+    outline: none;
+    border-color: #feca57;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.edit-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.cancel-edit-btn {
+    background: rgba(255, 107, 107, 0.2);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 8px;
+    color: #ff6b6b;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cancel-edit-btn:hover {
+    background: rgba(255, 107, 107, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Visual feedback for editing state */
+.sentence-card.editing {
+    border-color: #feca57;
+    box-shadow: 0 5px 15px rgba(254, 202, 87, 0.2);
+}
+
+.sentence-card.editing .sentence-content {
+    background: rgba(254, 202, 87, 0.05);
 }
 
 .sentence-content {
