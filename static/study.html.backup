@@ -53,25 +53,6 @@
                         </select>
                     </div>
 
-                    <!-- Verb Complexity Filter -->
-                    <div class="filter-group" id="verbComplexityGroup">
-                        <h3>Verb Complexity</h3>
-                        <div class="filter-options">
-                            <label class="filter-option">
-                                <input type="radio" name="verbComplexity" value="all" checked>
-                                <span>All Verbs</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="radio" name="verbComplexity" value="regular">
-                                <span>Regular Verbs</span>
-                            </label>
-                            <label class="filter-option">
-                                <input type="radio" name="verbComplexity" value="irregular">
-                                <span>Irregular Verbs</span>
-                            </label>
-                        </div>
-                    </div>
-
                     <!-- Tense/Mood Filter -->
                     <div class="filter-group" id="tenseMoodGroup">
                         <h3>Tense & Mood</h3>
@@ -327,7 +308,6 @@
         // Update filtered cards based on current selections
         function updateFilters() {
             const cardType = document.querySelector('input[name="cardType"]:checked').value;
-            const verbComplexity = document.querySelector('input[name="verbComplexity"]:checked').value;
             const selectedVerb = verbSelect.value;
             const selectedTenseMood = tenseMoodSelect.value;
             
@@ -336,14 +316,7 @@
                 if (cardType === 'verb' && !card.verb) return false;
                 if (cardType === 'sentence' && card.verb) return false;
                 
-                // Verb complexity filter (only applies to verb cards)
-                if (card.verb && verbComplexity !== 'all') {
-                    const isIrregular = irregularVerbs.includes(card.verb.toLowerCase());
-                    if (verbComplexity === 'irregular' && !isIrregular) return false;
-                    if (verbComplexity === 'regular' && isIrregular) return false;
-                }
-                
-                // Specific verb filter
+                // Verb filter
                 if (selectedVerb !== 'all' && card.verb !== selectedVerb) return false;
                 
                 // Tense/mood filter
@@ -363,7 +336,6 @@
             // Show/hide relevant filter groups
             const showVerbFilters = cardType === 'all' || cardType === 'verb';
             document.getElementById('verbFilterGroup').style.display = showVerbFilters ? 'block' : 'none';
-            document.getElementById('verbComplexityGroup').style.display = showVerbFilters ? 'block' : 'none';
             document.getElementById('tenseMoodGroup').style.display = showVerbFilters ? 'block' : 'none';
         }
 
