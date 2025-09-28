@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Flashcards</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Spanish Verb Trainer</h1>
+            <nav>
+                <a href="index.html" class="nav-link">Generate Verbs</a>
+                <a href="sentences.html" class="nav-link">Process Sentences</a>
+                <a href="study.html" class="nav-link">Study Cards</a>
+                <a href="manage.html" class="nav-link active">Manage Cards</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="management-section">
+                <h2>Card Management</h2>
+                <p>Organize, filter, and manage your study cards</p>
+
+                <!-- Stats Overview -->
+                <div class="stats-overview">
+                    <div class="stat-card">
+                        <h3 id="totalCards">0</h3>
+                        <label>Total Cards</label>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="verbCards">0</h3>
+                        <label>Verb Cards</label>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="sentenceCards">0</h3>
+                        <label>Sentence Cards</label>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="selectedCards">0</h3>
+                        <label>Selected</label>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="management-controls">
+                    <div class="search-section">
+                        <input type="text" id="searchInput" placeholder="Search cards..." class="search-input">
+                        <select id="filterType" class="filter-select">
+                            <option value="all">All Cards</option>
+                            <option value="verb">Verb Cards Only</option>
+                            <option value="sentence">Sentence Cards Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="bulk-actions">
+                        <button id="selectAllBtn" class="btn-secondary">Select All</button>
+                        <button id="selectNoneBtn" class="btn-secondary">Select None</button>
+                        <button id="deleteSelectedBtn" class="btn-danger" disabled>Delete Selected</button>
+                        <button id="findDuplicatesBtn" class="btn-secondary">Find Duplicates</button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingSection" class="loading-section" style="display: none;">
+                    <div class="loading-animation">
+                        <div class="spinner-large">📚</div>
+                        <p>Loading your cards...</p>
+                    </div>
+                </div>
+
+                <!-- Cards Display -->
+                <div id="cardsSection" class="cards-section" style="display: none;">
+                    <div class="cards-grid" id="cardsGrid">
+                        <!-- Cards will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptySection" class="empty-section" style="display: none;">
+                    <div class="empty-message">
+                        <h3>No Cards Found</h3>
+                        <p>You haven't created any study cards yet, or no cards match your current filter.</p>
+                        <a href="index.html" class="btn-primary">Generate Your First Cards</a>
+                    </div>
+                </div>
+
+                <!-- Error State -->
+                <div id="errorSection" class="error-section" style="display: none;">
+                    <div class="error-message">
+                        <h4>Failed to Load Cards</h4>
+                        <p id="errorText"></p>
+                        <button id="retryBtn" class="btn-secondary">Retry</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:8000' 
+            : 'https://spanish-flashcards-production.up.railway.app';
+
+        let allCards = [];
+        let filteredCards = [];
+        let selectedCardIds = new Set();
+
+        // DOM Elements
+        const searchInput = document.getElementById('searchInput');
+        const filterType = document.getElementById('filterType');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const selectNoneBtn = document.getElementById('selectNoneBtn');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        const findDuplicatesBtn = document.getElementById('findDuplicatesBtn');
+        const cardsGrid = document.getElementById('cardsGrid');
+        const loadingSection = document.getElementById('loadingSection');
+        const cardsSection = document.getElementById('cardsSection');
+        const emptySection = document.getElementById('emptySection');
+        const errorSection = document.getElementById('errorSection');
+        const retryBtn = document.getElementById('retryBtn');
+
+        // Event listeners
+        searchInput.addEventListener('input', filterAndDisplayCards);
+        filterType.addEventListener('change', filterAndDisplayCards);
+        selectAllBtn.addEventListener('click', selectAll);
+        selectNoneBtn.addEventListener('click', selectNone);
+        deleteSelectedBtn.addEventListener('click', deleteSelected);
+        findDuplicatesBtn.addEventListener('click', findDuplicates);
+        retryBtn.addEventListener('click', loadCards);
+
+        // Load cards on page load
+        document.addEventListener('DOMContentLoaded', loadCards);
+
+        // Load all cards from API
+        async function loadCards() {
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/cards`);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch cards: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                allCards = data.cards || [];
+                
+                if (allCards.length === 0) {
+                    showEmpty();
+                } else {
+                    processCards();
+                    filterAndDisplayCards();
+                    updateStats();
+                    showCards();
+                }
+                
+            } catch (error) {
+                console.error('Error loading cards:', error);
+                showError(error.message);
+            }
+        }
+
+        // Process cards to add consistent structure
+        function processCards() {
+            allCards = allCards.map(card => {
+                if (card.card_type === 'verb' || card.conjugated_form) {
+                    return {
+                        ...card,
+                        type: 'verb',
+                        display_front: `${card.pronoun} + ${card.verb} (${card.tense} ${card.mood})`,
+                        display_back: card.conjugated_form,
+                        search_text: `${card.verb} ${card.pronoun} ${card.tense} ${card.mood} ${card.conjugated_form}`
+                    };
+                } else {
+                    return {
+                        ...card,
+                        type: 'sentence',
+                        display_front: card.english_translation || 'English translation',
+                        display_back: card.spanish_sentence || 'Spanish sentence',
+                        search_text: `${card.spanish_sentence} ${card.english_translation} ${card.grammar_notes || ''}`
+                    };
+                }
+            });
+        }
+
+        // Filter and display cards based on search and filter
+        function filterAndDisplayCards() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const typeFilter = filterType.value;
+            
+            filteredCards = allCards.filter(card => {
+                const matchesSearch = searchTerm === '' || card.search_text.toLowerCase().includes(searchTerm);
+                const matchesType = typeFilter === 'all' || card.type === typeFilter;
+                return matchesSearch && matchesType;
+            });
+            
+            displayCards();
+            updateStats();
+        }
+
+        // Display cards in grid
+        function displayCards() {
+            if (filteredCards.length === 0) {
+                cardsGrid.innerHTML = '<p class="no-results">No cards match your search criteria.</p>';
+                return;
+            }
+            
+            cardsGrid.innerHTML = filteredCards.map(card => createCardHTML(card)).join('');
+        }
+
+        // Create HTML for individual card
+        function createCardHTML(card) {
+            const isSelected = selectedCardIds.has(card.id);
+            const cardClass = card.type === 'verb' ? 'verb-card' : 'sentence-card';
+            
+            return `
+                <div class="manage-card ${cardClass} ${isSelected ? 'selected' : ''}" data-card-id="${card.id}">
+                    <div class="card-header">
+                        <input type="checkbox" class="card-checkbox" ${isSelected ? 'checked' : ''} 
+                               onchange="toggleCardSelection(${card.id})">
+                        <span class="card-type-badge">${card.type}</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-front">
+                            <label>Front:</label>
+                            <p>${card.display_front}</p>
+                        </div>
+                        <div class="card-back">
+                            <label>Back:</label>
+                            <p>${card.display_back}</p>
+                        </div>
+                        ${card.grammar_notes ? `<div class="card-notes"><label>Notes:</label><p>${card.grammar_notes}</p></div>` : ''}
+                    </div>
+                    <div class="card-actions">
+                        <button class="delete-single-btn" onclick="deleteSingleCard(${card.id})">Delete</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Toggle card selection
+        function toggleCardSelection(cardId) {
+            if (selectedCardIds.has(cardId)) {
+                selectedCardIds.delete(cardId);
+            } else {
+                selectedCardIds.add(cardId);
+            }
+            
+            updateCardDisplay(cardId);
+            updateStats();
+            updateDeleteButton();
+        }
+
+        // Update individual card display
+        function updateCardDisplay(cardId) {
+            const cardElement = document.querySelector(`[data-card-id="${cardId}"]`);
+            const checkbox = cardElement.querySelector('.card-checkbox');
+            const isSelected = selectedCardIds.has(cardId);
+            
+            checkbox.checked = isSelected;
+            cardElement.classList.toggle('selected', isSelected);
+        }
+
+        // Select/deselect all filtered cards
+        function selectAll() {
+            filteredCards.forEach(card => selectedCardIds.add(card.id));
+            updateAllCardDisplays();
+            updateStats();
+            updateDeleteButton();
+        }
+
+        function selectNone() {
+            selectedCardIds.clear();
+            updateAllCardDisplays();
+            updateStats();
+            updateDeleteButton();
+        }
+
+        // Update all card displays
+        function updateAllCardDisplays() {
+            const cardElements = document.querySelectorAll('.manage-card');
+            cardElements.forEach(element => {
+                const cardId = parseInt(element.dataset.cardId);
+                const checkbox = element.querySelector('.card-checkbox');
+                const isSelected = selectedCardIds.has(cardId);
+                
+                checkbox.checked = isSelected;
+                element.classList.toggle('selected', isSelected);
+            });
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalCards').textContent = allCards.length;
+            document.getElementById('verbCards').textContent = allCards.filter(c => c.type === 'verb').length;
+            document.getElementById('sentenceCards').textContent = allCards.filter(c => c.type === 'sentence').length;
+            document.getElementById('selectedCards').textContent = selectedCardIds.size;
+        }
+
+        // Update delete button state
+        function updateDeleteButton() {
+            deleteSelectedBtn.disabled = selectedCardIds.size === 0;
+        }
+
+        // Delete selected cards
+        async function deleteSelected() {
+            if (selectedCardIds.size === 0) return;
+            
+            const confirmDelete = confirm(`Are you sure you want to delete ${selectedCardIds.size} selected cards? This cannot be undone.`);
+            if (!confirmDelete) return;
+            
+            deleteSelectedBtn.disabled = true;
+            deleteSelectedBtn.innerHTML = 'Deleting...';
+            
+            try {
+                const deletePromises = Array.from(selectedCardIds).map(async cardId => {
+                    const card = allCards.find(c => c.id === cardId);
+                    const cardType = card.type;
+                    
+                    return fetch(`${API_BASE}/api/cards/${cardId}?type=${cardType}`, {
+                        method: 'DELETE'
+                    });
+                });
+                
+                await Promise.all(deletePromises);
+                
+                // Remove deleted cards from local data
+                allCards = allCards.filter(card => !selectedCardIds.has(card.id));
+                selectedCardIds.clear();
+                
+                // Refresh display
+                filterAndDisplayCards();
+                updateStats();
+                updateDeleteButton();
+                
+                deleteSelectedBtn.innerHTML = 'Delete Selected';
+                
+            } catch (error) {
+                console.error('Error deleting cards:', error);
+                alert('Failed to delete some cards. Please try again.');
+                deleteSelectedBtn.disabled = false;
+                deleteSelectedBtn.innerHTML = 'Delete Selected';
+            }
+        }
+
+        // Delete single card
+        async function deleteSingleCard(cardId) {
+            const confirmDelete = confirm('Are you sure you want to delete this card?');
+            if (!confirmDelete) return;
+            
+            try {
+                const card = allCards.find(c => c.id === cardId);
+                const cardType = card.type;
+                
+                const response = await fetch(`${API_BASE}/api/cards/${cardId}?type=${cardType}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to delete card');
+                }
+                
+                // Remove from local data
+                allCards = allCards.filter(c => c.id !== cardId);
+                selectedCardIds.delete(cardId);
+                
+                // Refresh display
+                filterAndDisplayCards();
+                updateStats();
+                updateDeleteButton();
+                
+            } catch (error) {
+                console.error('Error deleting card:', error);
+                alert('Failed to delete card. Please try again.');
+            }
+        }
+
+        // Find duplicate sentences
+        function findDuplicates() {
+            const sentenceCards = allCards.filter(card => card.type === 'sentence');
+            const duplicates = [];
+            const seen = new Map();
+            
+            sentenceCards.forEach(card => {
+                const key = card.spanish_sentence.toLowerCase().trim();
+                if (seen.has(key)) {
+                    if (!duplicates.includes(seen.get(key))) {
+                        duplicates.push(seen.get(key));
+                    }
+                    duplicates.push(card.id);
+                } else {
+                    seen.set(key, card.id);
+                }
+            });
+            
+            if (duplicates.length > 0) {
+                selectedCardIds.clear();
+                duplicates.forEach(id => selectedCardIds.add(id));
+                updateAllCardDisplays();
+                updateStats();
+                updateDeleteButton();
+                
+                alert(`Found ${duplicates.length} duplicate sentence cards. They have been selected for review.`);
+            } else {
+                alert('No duplicate sentence cards found.');
+            }
+        }
+
+        // UI state functions
+        function showLoading() {
+            hideAllSections();
+            loadingSection.style.display = 'block';
+        }
+
+        function showCards() {
+            hideAllSections();
+            cardsSection.style.display = 'block';
+        }
+
+        function showEmpty() {
+            hideAllSections();
+            emptySection.style.display = 'block';
+        }
+
+        function showError(message) {
+            hideAllSections();
+            document.getElementById('errorText').textContent = message;
+            errorSection.style.display = 'block';
+        }
+
+        function hideAllSections() {
+            loadingSection.style.display = 'none';
+            cardsSection.style.display = 'none';
+            emptySection.style.display = 'none';
+            errorSection.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
