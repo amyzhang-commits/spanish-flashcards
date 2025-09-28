@@ -165,13 +165,33 @@
         // Process cards to add consistent structure
         function processCards() {
             allCards = allCards.map(card => {
-                // More robust type detection - use !! to convert to boolean
-                const hasVerbFields = !!(card.verb && card.pronoun && card.tense && card.mood && card.conjugated_form);
-                const hasSentenceFields = !!(card.spanish_sentence && card.english_translation) && !hasVerbFields;
+                // Parse the prefixed ID
+                let actualId = card.id;
+                let cardType = 'unknown';
                 
-                console.log('Processing card:', card.id, 'hasVerbFields:', hasVerbFields, 'hasSentenceFields:', hasSentenceFields); // Debug
+                if (typeof card.id === 'string') {
+                    if (card.id.startsWith('verb_')) {
+                        cardType = 'verb';
+                        actualId = card.id.replace('verb_', '');
+                    } else if (card.id.startsWith('sentence_')) {
+                        cardType = 'sentence';
+                        actualId = card.id.replace('sentence_', '');
+                    }
+                } else {
+                    // Fallback for old-style numeric IDs
+                    const hasVerbFields = !!(card.verb && card.pronoun && card.tense && card.mood && card.conjugated_form);
+                    const hasSentenceFields = !!(card.spanish_sentence && card.english_translation) && !hasVerbFields;
+                    
+                    if (hasVerbFields) {
+                        cardType = 'verb';
+                    } else if (hasSentenceFields) {
+                        cardType = 'sentence';
+                    }
+                }
                 
-                if (hasVerbFields) {
+                console.log('Processing card:', card.id, 'type:', cardType);
+                
+                if (cardType === 'verb') {
                     return {
                         ...card,
                         type: 'verb',
@@ -179,7 +199,7 @@
                         display_back: card.conjugated_form,
                         search_text: `${card.verb} ${card.pronoun} ${card.tense} ${card.mood} ${card.conjugated_form}`
                     };
-                } else if (hasSentenceFields) {
+                } else if (cardType === 'sentence') {
                     return {
                         ...card,
                         type: 'sentence',
@@ -331,10 +351,7 @@
             
             try {
                 const deletePromises = Array.from(selectedCardIds).map(async cardId => {
-                    const card = allCards.find(c => c.id === cardId);
-                    const cardType = card.type;
-                    
-                    return fetch(`${API_BASE}/api/cards/${cardId}?type=${cardType}`, {
+                    return fetch(`${API_BASE}/api/cards/${cardId}`, {
                         method: 'DELETE'
                     });
                 });
@@ -366,10 +383,7 @@
             if (!confirmDelete) return;
             
             try {
-                const card = allCards.find(c => c.id === cardId);
-                const cardType = card.type;
-                
-                const response = await fetch(`${API_BASE}/api/cards/${cardId}?type=${cardType}`, {
+                const response = await fetch(`${API_BASE}/api/cards/${cardId}`, {
                     method: 'DELETE'
                 });
                 
