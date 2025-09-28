@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Mode - Spanish Flashcards</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container study-container">
+        <header>
+            <h1>Spanish Verb Trainer</h1>
+            <nav>
+                <a href="index.html" class="nav-link">Generate Verbs</a>
+                <a href="sentences.html" class="nav-link">Process Sentences</a>
+                <a href="study.html" class="nav-link active">Study Cards</a>
+                <a href="manage.html" class="nav-link">Manage Cards</a>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Filter Selection Screen -->
+            <section id="filterSection" class="filter-section">
+                <h2>Study Session Setup</h2>
+                <p>Choose what you want to practice</p>
+
+                <div class="filter-grid">
+                    <!-- Card Type Filter -->
+                    <div class="filter-group">
+                        <h3>Card Type</h3>
+                        <div class="filter-options">
+                            <label class="filter-option">
+                                <input type="radio" name="cardType" value="all" checked>
+                                <span>All Cards</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="radio" name="cardType" value="verb">
+                                <span>Verb Conjugations</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="radio" name="cardType" value="sentence">
+                                <span>Sentence Translations</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Verb Filter -->
+                    <div class="filter-group" id="verbFilterGroup">
+                        <h3>Specific Verbs</h3>
+                        <select id="verbSelect" class="filter-select">
+                            <option value="all">All Verbs</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Tense/Mood Filter -->
+                    <div class="filter-group" id="tenseMoodGroup">
+                        <h3>Tense & Mood</h3>
+                        <select id="tenseMoodSelect" class="filter-select">
+                            <option value="all">All Tenses & Moods</option>
+                            <option value="present indicative">Present Indicative</option>
+                            <option value="preterite indicative">Preterite</option>
+                            <option value="imperfect indicative">Imperfect</option>
+                            <option value="future indicative">Future</option>
+                            <option value="present subjunctive">Present Subjunctive</option>
+                            <option value="imperfect subjunctive">Imperfect Subjunctive</option>
+                            <option value="simple_conditional conditional">Conditional</option>
+                            <option value="affirmative_present imperative">Imperative</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="session-info">
+                    <div class="card-count">
+                        <span id="availableCards">Loading cards...</span>
+                    </div>
+                    <button id="startStudyBtn" class="btn-primary start-btn" disabled>
+                        Start Study Session
+                    </button>
+                </div>
+            </section>
+
+            <!-- Loading Screen -->
+            <section id="loadingSection" class="loading-section" style="display: none;">
+                <div class="loading-animation">
+                    <div class="spinner-large">📚</div>
+                    <p id="loadingText">Loading your cards...</p>
+                </div>
+            </section>
+
+            <!-- Study Interface -->
+            <section id="studySection" class="study-section" style="display: none;">
+                <!-- Progress Header -->
+                <div class="study-header">
+                    <div class="progress-info">
+                        <span id="currentCard">1</span> / <span id="totalCards">0</span>
+                        <span class="deck-indicator" id="deckIndicator">Main Deck</span>
+                    </div>
+                    <div class="session-stats">
+                        <span id="sideStackCount">0</span> in side stack
+                    </div>
+                </div>
+
+                <!-- Flashcard -->
+                <div class="flashcard-container">
+                    <div class="flashcard" id="flashcard">
+                        <div class="card-front" id="cardFront">
+                            <div class="card-content">
+                                <p id="frontText">Click to start</p>
+                                <small id="cardHint"></small>
+                            </div>
+                        </div>
+                        <div class="card-back" id="cardBack" style="display: none;">
+                            <div class="card-content">
+                                <p id="backText">Answer here</p>
+                                <small id="cardNotes"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Study Controls -->
+                <div class="study-controls">
+                    <button id="flipBtn" class="btn-primary flip-btn">
+                        Tap to Reveal
+                    </button>
+                    
+                    <div id="answerControls" class="answer-controls" style="display: none;">
+                        <button id="continueBtn" class="btn-success">
+                            Continue
+                        </button>
+                        <button id="sideStackBtn" class="btn-warning">
+                            Need Practice
+                        </button>
+                    </div>
+
+                    <!-- Side Stack Controls -->
+                    <div id="sideStackControls" class="side-stack-controls" style="display: none;">
+                        <button id="masteredBtn" class="btn-success">
+                            Mastered
+                        </button>
+                        <button id="stillPracticeBtn" class="btn-warning">
+                            Still Need Practice
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Session Complete -->
+            <section id="completeSection" class="complete-section" style="display: none;">
+                <div class="completion-message">
+                    <h2>Session Complete!</h2>
+                    <div class="session-summary">
+                        <div class="summary-stat">
+                            <h3 id="cardsStudied">0</h3>
+                            <label>Cards Studied</label>
+                        </div>
+                        <div class="summary-stat">
+                            <h3 id="cardsMastered">0</h3>
+                            <label>Cards Mastered</label>
+                        </div>
+                        <div class="summary-stat">
+                            <h3 id="cardsForReview">0</h3>
+                            <label>Still Practicing</label>
+                        </div>
+                    </div>
+                    <div class="completion-actions">
+                        <button id="newSessionBtn" class="btn-primary">
+                            New Study Session
+                        </button>
+                        <button id="sameFiltersBtn" class="btn-secondary">
+                            Study Same Cards Again
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Error Screen -->
+            <section id="errorSection" class="error-section" style="display: none;">
+                <div class="error-message">
+                    <h4>Study Session Error</h4>
+                    <p id="errorText">Something went wrong loading your cards.</p>
+                    <button id="retryStudyBtn" class="btn-secondary">Try Again</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:8000' 
+            : 'https://spanish-flashcards-production.up.railway.app';
+
+        // Study session state
+        let allCards = [];
+        let filteredCards = [];
+        let mainDeck = [];
+        let sideStack = [];
+        let currentCardIndex = 0;
+        let currentCard = null;
+        let isFlipped = false;
+        let studyingMainDeck = true;
+        let sessionStats = {
+            cardsStudied: 0,
+            cardsMastered: 0,
+            cardsForReview: 0
+        };
+
+        // DOM Elements
+        const filterSection = document.getElementById('filterSection');
+        const loadingSection = document.getElementById('loadingSection');
+        const studySection = document.getElementById('studySection');
+        const completeSection = document.getElementById('completeSection');
+        const errorSection = document.getElementById('errorSection');
+
+        const cardTypeRadios = document.querySelectorAll('input[name="cardType"]');
+        const verbSelect = document.getElementById('verbSelect');
+        const tenseMoodSelect = document.getElementById('tenseMoodSelect');
+        const availableCards = document.getElementById('availableCards');
+        const startStudyBtn = document.getElementById('startStudyBtn');
+
+        const flashcard = document.getElementById('flashcard');
+        const cardFront = document.getElementById('cardFront');
+        const cardBack = document.getElementById('cardBack');
+        const frontText = document.getElementById('frontText');
+        const backText = document.getElementById('backText');
+        const cardHint = document.getElementById('cardHint');
+        const cardNotes = document.getElementById('cardNotes');
+
+        const flipBtn = document.getElementById('flipBtn');
+        const answerControls = document.getElementById('answerControls');
+        const continueBtn = document.getElementById('continueBtn');
+        const sideStackBtn = document.getElementById('sideStackBtn');
+        const sideStackControls = document.getElementById('sideStackControls');
+        const masteredBtn = document.getElementById('masteredBtn');
+        const stillPracticeBtn = document.getElementById('stillPracticeBtn');
+
+        const currentCardSpan = document.getElementById('currentCard');
+        const totalCardsSpan = document.getElementById('totalCards');
+        const deckIndicator = document.getElementById('deckIndicator');
+        const sideStackCount = document.getElementById('sideStackCount');
+
+        // Event listeners
+        cardTypeRadios.forEach(radio => radio.addEventListener('change', updateFilters));
+        verbSelect.addEventListener('change', updateFilters);
+        tenseMoodSelect.addEventListener('change', updateFilters);
+        startStudyBtn.addEventListener('click', startStudySession);
+        
+        flipBtn.addEventListener('click', flipCard);
+        continueBtn.addEventListener('click', continueToNext);
+        sideStackBtn.addEventListener('click', addToSideStack);
+        masteredBtn.addEventListener('click', markAsMastered);
+        stillPracticeBtn.addEventListener('click', keepInSideStack);
+
+        document.getElementById('newSessionBtn').addEventListener('click', () => showSection('filterSection'));
+        document.getElementById('sameFiltersBtn').addEventListener('click', startStudySession);
+        document.getElementById('retryStudyBtn').addEventListener('click', loadCards);
+
+        // Add touch support for mobile
+        flashcard.addEventListener('touchend', (e) => {
+            if (!isFlipped) {
+                e.preventDefault();
+                flipCard();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadCards);
+
+        // Load all cards and populate filters
+        async function loadCards() {
+            showSection('loadingSection');
+            document.getElementById('loadingText').textContent = 'Loading your cards...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/cards`);
+                if (!response.ok) throw new Error('Failed to fetch cards');
+                
+                const data = await response.json();
+                allCards = data.cards || [];
+                
+                populateVerbFilter();
+                updateFilters();
+                showSection('filterSection');
+                
+            } catch (error) {
+                console.error('Error loading cards:', error);
+                showError('Failed to load cards. Please check your connection and try again.');
+            }
+        }
+
+        // Populate verb filter dropdown
+        function populateVerbFilter() {
+            const verbs = [...new Set(allCards
+                .filter(card => card.verb)
+                .map(card => card.verb)
+            )].sort();
+            
+            verbSelect.innerHTML = '<option value="all">All Verbs</option>';
+            verbs.forEach(verb => {
+                const option = document.createElement('option');
+                option.value = verb;
+                option.textContent = verb;
+                verbSelect.appendChild(option);
+            });
+        }
+
+        // Update filtered cards based on current selections
+        function updateFilters() {
+            const cardType = document.querySelector('input[name="cardType"]:checked').value;
+            const selectedVerb = verbSelect.value;
+            const selectedTenseMood = tenseMoodSelect.value;
+            
+            filteredCards = allCards.filter(card => {
+                // Card type filter
+                if (cardType === 'verb' && !card.verb) return false;
+                if (cardType === 'sentence' && card.verb) return false;
+                
+                // Verb filter
+                if (selectedVerb !== 'all' && card.verb !== selectedVerb) return false;
+                
+                // Tense/mood filter
+                if (selectedTenseMood !== 'all' && card.verb) {
+                    const [tense, mood] = selectedTenseMood.split(' ');
+                    if (tense && card.tense !== tense) return false;
+                    if (mood && card.mood !== mood) return false;
+                }
+                
+                return true;
+            });
+            
+            // Update UI
+            availableCards.textContent = `${filteredCards.length} cards available`;
+            startStudyBtn.disabled = filteredCards.length === 0;
+            
+            // Show/hide relevant filter groups
+            const showVerbFilters = cardType === 'all' || cardType === 'verb';
+            document.getElementById('verbFilterGroup').style.display = showVerbFilters ? 'block' : 'none';
+            document.getElementById('tenseMoodGroup').style.display = showVerbFilters ? 'block' : 'none';
+        }
+
+        // Start study session
+        function startStudySession() {
+            if (filteredCards.length === 0) return;
+            
+            // Initialize session
+            mainDeck = [...filteredCards].sort(() => Math.random() - 0.5); // Shuffle
+            sideStack = [];
+            currentCardIndex = 0;
+            studyingMainDeck = true;
+            sessionStats = { cardsStudied: 0, cardsMastered: 0, cardsForReview: 0 };
+            
+            showSection('studySection');
+            updateProgress();
+            showNextCard();
+        }
+
+        // Show next card
+        function showNextCard() {
+            const currentDeck = studyingMainDeck ? mainDeck : sideStack;
+            
+            if (currentCardIndex >= currentDeck.length) {
+                if (studyingMainDeck && sideStack.length > 0) {
+                    // Switch to side stack
+                    studyingMainDeck = false;
+                    currentCardIndex = 0;
+                    deckIndicator.textContent = 'Side Stack Review';
+                    sideStack.sort(() => Math.random() - 0.5); // Reshuffle side stack
+                    showNextCard();
+                    return;
+                } else {
+                    // Session complete
+                    completeSession();
+                    return;
+                }
+            }
+            
+            currentCard = currentDeck[currentCardIndex];
+            displayCard(currentCard);
+            updateProgress();
+        }
+
+        // Display card content
+        function displayCard(card) {
+            isFlipped = false;
+            cardFront.style.display = 'block';
+            cardBack.style.display = 'none';
+            flipBtn.style.display = 'block';
+            answerControls.style.display = 'none';
+            sideStackControls.style.display = 'none';
+            
+            if (card.verb) {
+                // Verb card
+                frontText.textContent = `${card.pronoun} + ${card.verb}`;
+                cardHint.textContent = `${card.tense} ${card.mood}`;
+                backText.textContent = card.conjugated_form;
+                cardNotes.textContent = '';
+            } else {
+                // Sentence card
+                frontText.textContent = card.english_translation || 'Translate this';
+                cardHint.textContent = 'English → Spanish';
+                backText.textContent = card.spanish_sentence || 'Spanish sentence';
+                cardNotes.textContent = card.grammar_notes || '';
+            }
+        }
+
+        // Flip card
+        function flipCard() {
+            if (isFlipped) return;
+            
+            isFlipped = true;
+            cardFront.style.display = 'none';
+            cardBack.style.display = 'block';
+            flipBtn.style.display = 'none';
+            
+            if (studyingMainDeck) {
+                answerControls.style.display = 'flex';
+            } else {
+                sideStackControls.style.display = 'flex';
+            }
+        }
+
+        // Continue to next card
+        function continueToNext() {
+            sessionStats.cardsStudied++;
+            currentCardIndex++;
+            showNextCard();
+        }
+
+        // Add to side stack
+        function addToSideStack() {
+            sessionStats.cardsStudied++;
+            sideStack.push(currentCard);
+            currentCardIndex++;
+            showNextCard();
+        }
+
+        // Mark as mastered (remove from side stack)
+        function markAsMastered() {
+            sessionStats.cardsMastered++;
+            currentCardIndex++;
+            showNextCard();
+        }
+
+        // Keep in side stack for continued practice
+        function keepInSideStack() {
+            sessionStats.cardsForReview++;
+            // Move to end of side stack
+            sideStack.push(sideStack.splice(currentCardIndex, 1)[0]);
+            showNextCard();
+        }
+
+        // Update progress display
+        function updateProgress() {
+            const currentDeck = studyingMainDeck ? mainDeck : sideStack;
+            currentCardSpan.textContent = currentCardIndex + 1;
+            totalCardsSpan.textContent = currentDeck.length;
+            sideStackCount.textContent = sideStack.length;
+            
+            if (!studyingMainDeck) {
+                deckIndicator.textContent = 'Side Stack Review';
+            }
+        }
+
+        // Complete session
+        function completeSession() {
+            document.getElementById('cardsStudied').textContent = sessionStats.cardsStudied;
+            document.getElementById('cardsMastered').textContent = sessionStats.cardsMastered;
+            document.getElementById('cardsForReview').textContent = sessionStats.cardsForReview;
+            showSection('completeSection');
+        }
+
+        // Show specific section
+        function showSection(sectionName) {
+            const sections = [filterSection, loadingSection, studySection, completeSection, errorSection];
+            sections.forEach(section => section.style.display = 'none');
+            
+            if (sectionName === 'filterSection') filterSection.style.display = 'block';
+            else if (sectionName === 'loadingSection') loadingSection.style.display = 'block';
+            else if (sectionName === 'studySection') studySection.style.display = 'block';
+            else if (sectionName === 'completeSection') completeSection.style.display = 'block';
+            else if (sectionName === 'errorSection') errorSection.style.display = 'block';
+        }
+
+        // Show error
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            showSection('errorSection');
+        }
+    </script>
+</body>
+</html>
