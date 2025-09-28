@@ -340,69 +340,47 @@
             const selectedVerb = verbSelect.value;
             const selectedTenseMood = tenseMoodSelect.value;
             
-            console.log('=== updateFilters called ===');
-            console.log('Card type:', cardType);
-            console.log('Verb complexity:', verbComplexity);
-            console.log('Selected verb:', selectedVerb);
-            console.log('Selected tense/mood:', selectedTenseMood);
-            
             filteredCards = allCards.filter(card => {
-                console.log(`Checking card ${card.id}: verb=${card.verb}, type=${cardType}`);
-                
                 // Card type filter
-                if (cardType === 'verb' && !card.verb) {
-                    console.log(`  Filtered out: not a verb card`);
-                    return false;
-                }
-                if (cardType === 'sentence' && card.verb) {
-                    console.log(`  Filtered out: not a sentence card`);
-                    return false;
-                }
+                if (cardType === 'verb' && !card.verb) return false;
+                if (cardType === 'sentence' && card.verb) return false;
                 
                 // Verb complexity filter (only applies to verb cards)
                 if (card.verb && verbComplexity !== 'all') {
                     const isIrregular = irregularVerbs.includes(card.verb.toLowerCase());
-                    console.log(`  Verb: ${card.verb}, isIrregular: ${isIrregular}, looking for: ${verbComplexity}`);
-                    if (verbComplexity === 'irregular' && !isIrregular) {
-                        console.log(`  Filtered out: regular verb but looking for irregular`);
-                        return false;
-                    }
-                    if (verbComplexity === 'regular' && isIrregular) {
-                        console.log(`  Filtered out: irregular verb but looking for regular`);
-                        return false;
-                    }
+                    if (verbComplexity === 'irregular' && !isIrregular) return false;
+                    if (verbComplexity === 'regular' && isIrregular) return false;
                 }
                 
                 // Specific verb filter
-                if (selectedVerb !== 'all' && card.verb !== selectedVerb) {
-                    console.log(`  Filtered out: verb doesn't match selection`);
-                    return false;
-                }
+                if (selectedVerb !== 'all' && card.verb !== selectedVerb) return false;
                 
                 // Tense/mood filter
                 if (selectedTenseMood !== 'all' && card.verb) {
                     const cardTenseMood = `${card.tense} ${card.mood}`;
-                    if (cardTenseMood !== selectedTenseMood) {
-                        console.log(`  Filtered out: tense/mood doesn't match`);
-                        return false;
-                    }
+                    if (cardTenseMood !== selectedTenseMood) return false;
                 }
                 
-                console.log(`  INCLUDED in results`);
                 return true;
             });
-            
-            console.log(`Final result: ${filteredCards.length} cards from ${allCards.length} total`);
             
             // Update UI
             availableCards.textContent = `${filteredCards.length} cards available`;
             startStudyBtn.disabled = filteredCards.length === 0;
             
-            // Show/hide relevant filter groups
+            // Show/hide relevant filter groups with smart logic
             const showVerbFilters = cardType === 'all' || cardType === 'verb';
             document.getElementById('verbFilterGroup').style.display = showVerbFilters ? 'block' : 'none';
             document.getElementById('verbComplexityGroup').style.display = showVerbFilters ? 'block' : 'none';
             document.getElementById('tenseMoodGroup').style.display = showVerbFilters ? 'block' : 'none';
+            
+            // Reset incompatible selections
+            if (cardType === 'sentence') {
+                // If sentence cards selected, reset verb-specific filters
+                document.querySelector('input[name="verbComplexity"][value="all"]').checked = true;
+                verbSelect.value = 'all';
+                tenseMoodSelect.value = 'all';
+            }
         }
 
         // Start study session
