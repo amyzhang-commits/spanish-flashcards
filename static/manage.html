@@ -165,13 +165,13 @@
         // Process cards to add consistent structure
         function processCards() {
             allCards = allCards.map(card => {
-                // More robust type detection
-                const isVerbCard = card.verb && card.pronoun && card.tense && card.mood && card.conjugated_form;
-                const isSentenceCard = (card.spanish_sentence || card.english_translation) && !isVerbCard;
+                // More robust type detection - use !! to convert to boolean
+                const hasVerbFields = !!(card.verb && card.pronoun && card.tense && card.mood && card.conjugated_form);
+                const hasSentenceFields = !!(card.spanish_sentence && card.english_translation) && !hasVerbFields;
                 
-                console.log('Processing card:', card.id, 'isVerbCard:', isVerbCard, 'isSentenceCard:', isSentenceCard); // Debug
+                console.log('Processing card:', card.id, 'hasVerbFields:', hasVerbFields, 'hasSentenceFields:', hasSentenceFields); // Debug
                 
-                if (isVerbCard) {
+                if (hasVerbFields) {
                     return {
                         ...card,
                         type: 'verb',
@@ -179,7 +179,7 @@
                         display_back: card.conjugated_form,
                         search_text: `${card.verb} ${card.pronoun} ${card.tense} ${card.mood} ${card.conjugated_form}`
                     };
-                } else if (isSentenceCard) {
+                } else if (hasSentenceFields) {
                     return {
                         ...card,
                         type: 'sentence',
@@ -394,21 +394,18 @@
 
         // Find duplicate sentences
         function findDuplicates() {
-            console.log('All cards:', allCards); // Debug log
-            
             const sentenceCards = allCards.filter(card => card.type === 'sentence');
-            console.log('Sentence cards found:', sentenceCards); // Debug log
+            console.log('Sentence cards found:', sentenceCards.length);
             
             const duplicates = [];
             const seenSentences = new Map();
             
             sentenceCards.forEach(card => {
-                // Use the actual Spanish sentence, not display text
-                const spanishText = card.spanish_sentence || card.display_back;
+                // Use the actual Spanish sentence for comparison
+                const spanishText = card.spanish_sentence;
                 if (!spanishText) return;
                 
                 const key = spanishText.toLowerCase().trim();
-                console.log('Processing sentence:', key); // Debug log
                 
                 if (seenSentences.has(key)) {
                     // Mark both the original and this duplicate
@@ -417,13 +414,11 @@
                         duplicates.push(originalId);
                     }
                     duplicates.push(card.id);
-                    console.log('Found duplicate:', key, 'IDs:', originalId, card.id); // Debug log
+                    console.log('Found duplicate sentence:', key, 'Cards:', originalId, card.id);
                 } else {
                     seenSentences.set(key, card.id);
                 }
             });
-            
-            console.log('All duplicates found:', duplicates); // Debug log
             
             if (duplicates.length > 0) {
                 selectedCardIds.clear();
@@ -432,7 +427,7 @@
                 updateStats();
                 updateDeleteButton();
                 
-                alert(`Found ${duplicates.length} duplicate sentence cards. They have been selected for review. Check the console for details.`);
+                alert(`Found ${duplicates.length} duplicate sentence cards. They have been selected for review.`);
             } else {
                 alert('No duplicate sentence cards found.');
             }
