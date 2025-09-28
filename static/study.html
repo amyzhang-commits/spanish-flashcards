@@ -81,10 +81,16 @@
                             <option value="preterite indicative">Preterite</option>
                             <option value="imperfect indicative">Imperfect</option>
                             <option value="future indicative">Future</option>
-                            <option value="present subjunctive">Present Subjunctive</option>
-                            <option value="imperfect subjunctive">Imperfect Subjunctive</option>
-                            <option value="simple_conditional conditional">Conditional</option>
-                            <option value="affirmative_present imperative">Imperative</option>
+                            <option value="present_perfect indicative">Present Perfect</option>
+                            <option value="past_perfect indicative">Past Perfect</option>
+                            <option value="future_perfect indicative">Future Perfect</option>
+                            <option value="present_subjunctive subjunctive">Present Subjunctive</option>
+                            <option value="imperfect_subjunctive subjunctive">Imperfect Subjunctive</option>
+                            <option value="imperfect_subjunctive_alt subjunctive">Imperfect Subjunctive (Alt)</option>
+                            <option value="present_perfect_subjunctive subjunctive">Present Perfect Subjunctive</option>
+                            <option value="conditional conditional">Conditional</option>
+                            <option value="conditional_perfect conditional">Conditional Perfect</option>
+                            <option value="imperative_present imperative">Imperative</option>
                         </select>
                     </div>
                 </div>
@@ -334,6 +340,11 @@
             const selectedVerb = verbSelect.value;
             const selectedTenseMood = tenseMoodSelect.value;
             
+            // Debug: Check what verbs we actually have
+            const uniqueVerbs = [...new Set(allCards.filter(card => card.verb).map(card => card.verb))];
+            console.log('Available verbs:', uniqueVerbs);
+            console.log('First few cards:', allCards.slice(0, 3));
+            
             filteredCards = allCards.filter(card => {
                 // Card type filter
                 if (cardType === 'verb' && !card.verb) return false;
@@ -342,6 +353,7 @@
                 // Verb complexity filter (only applies to verb cards)
                 if (card.verb && verbComplexity !== 'all') {
                     const isIrregular = irregularVerbs.includes(card.verb.toLowerCase());
+                    console.log(`Verb: ${card.verb}, isIrregular: ${isIrregular}`); // Debug
                     if (verbComplexity === 'irregular' && !isIrregular) return false;
                     if (verbComplexity === 'regular' && isIrregular) return false;
                 }
@@ -351,13 +363,14 @@
                 
                 // Tense/mood filter
                 if (selectedTenseMood !== 'all' && card.verb) {
-                    const [tense, mood] = selectedTenseMood.split(' ');
-                    if (tense && card.tense !== tense) return false;
-                    if (mood && card.mood !== mood) return false;
+                    const cardTenseMood = `${card.tense} ${card.mood}`;
+                    if (cardTenseMood !== selectedTenseMood) return false;
                 }
                 
                 return true;
             });
+            
+            console.log(`Filtered ${filteredCards.length} cards from ${allCards.length} total`); // Debug
             
             // Update UI
             availableCards.textContent = `${filteredCards.length} cards available`;
