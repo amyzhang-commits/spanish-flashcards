@@ -396,38 +396,35 @@
         function findDuplicates() {
             const sentenceCards = allCards.filter(card => card.type === 'sentence');
             console.log('Sentence cards found:', sentenceCards.length);
+            console.log('First few sentence cards:', sentenceCards.slice(0, 5)); // Debug what's actually in there
             
-            const duplicates = [];
+            const duplicatesToRemove = [];
             const seenSentences = new Map();
             
             sentenceCards.forEach(card => {
-                // Use the actual Spanish sentence for comparison
                 const spanishText = card.spanish_sentence;
                 if (!spanishText) return;
                 
                 const key = spanishText.toLowerCase().trim();
                 
                 if (seenSentences.has(key)) {
-                    // Mark both the original and this duplicate
-                    const originalId = seenSentences.get(key);
-                    if (!duplicates.includes(originalId)) {
-                        duplicates.push(originalId);
-                    }
-                    duplicates.push(card.id);
-                    console.log('Found duplicate sentence:', key, 'Cards:', originalId, card.id);
+                    // This is a duplicate - mark it for removal (keep the first one)
+                    duplicatesToRemove.push(card.id);
+                    console.log('Found duplicate sentence to remove:', key, 'Card ID:', card.id);
                 } else {
+                    // First time seeing this sentence - keep it
                     seenSentences.set(key, card.id);
                 }
             });
             
-            if (duplicates.length > 0) {
+            if (duplicatesToRemove.length > 0) {
                 selectedCardIds.clear();
-                duplicates.forEach(id => selectedCardIds.add(id));
+                duplicatesToRemove.forEach(id => selectedCardIds.add(id));
                 updateAllCardDisplays();
                 updateStats();
                 updateDeleteButton();
                 
-                alert(`Found ${duplicates.length} duplicate sentence cards. They have been selected for review.`);
+                alert(`Found ${duplicatesToRemove.length} duplicate sentence cards (extras). They have been selected for removal.`);
             } else {
                 alert('No duplicate sentence cards found.');
             }
